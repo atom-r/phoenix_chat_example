@@ -1,6 +1,45 @@
-import {Socket, LongPoller} from "phoenix"
+import ApolloClient from 'apollo-client'
+import {createNetworkInterface} from 'apollo-phoenix-websocket'
+import gql from 'graphql-tag'
 
 class App {
+  static init() {
+    const networkInterface = createNetworkInterface({
+      uri: 'ws://localhost:4000/socket',
+      logger: ((kind, msg, data) => { console.log(`${kind}: ${msg}`, data) }),
+      channel: {
+        topic: '__absinthe__:control',
+        in_msg: 'doc'
+      }
+    })
+
+    const apolloClient = new ApolloClient({ networkInterface })
+    const observable = apolloClient.subscribe({
+      query: gql`
+      subscription Messages {
+        message(room: "lobby") {
+          body
+          author { name }
+        }
+      }
+      `,
+      variables: {}
+    })
+
+    const observer = observable.subscribe({
+      next: (data) => {
+        console.log("got lobby message", data)
+      },
+      error: (error) => {
+        console.log("got lobby error", error)
+      }
+    })
+
+    console.log(observer)
+  }
+}
+
+class AppOld {
 
   static init(){
     let socket = new Socket("/socket", {
