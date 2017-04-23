@@ -19,8 +19,8 @@ defmodule Absinthe.Phoenix.Channel do
     handle_doc(query, config, socket)
   end
 
-  def handle_info(%{event: event, payload: payload}, socket) do
-    push(socket, event, payload)
+  def handle_info(%{event: "subscription:data", payload: payload, topic: topic}, socket) do
+    push(socket, topic, payload)
     {:noreply, socket}
   end
 
